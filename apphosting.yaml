@@ -8,12 +8,11 @@ env:
     value: "gemini-burgers-482816"
   - variable: GOOGLE_CLOUD_LOCATION
     value: "us-central1"
-
-# Secrets should be stored in Cloud Secret Manager
-# You can create them via the Firebase Console or gcloud CLI
-# Example: gcloud secrets create ELEVENLABS_API_KEY --replication-policy="automatic"
-secrets:
   - variable: ELEVENLABS_API_KEY
     secret: ELEVENLABS_API_KEY
   - variable: GEMINI_API_KEY
     secret: GEMINI_API_KEY
+
+# Secrets are now included in the env section for better compatibility
+# Ensure the service account has 'Secret Manager Secret Accessor' role
+

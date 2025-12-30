@@ -16,14 +16,18 @@ export async function GET() {
     })
   }
 
+  console.log("Kitchen Analysis: Starting analysis...")
   try {
     const orders = globalStore.getOrders().filter(o => o.status === "pending")
+    console.log(`Kitchen Analysis: Found ${orders.length} pending orders to analyze`)
     
     if (orders.length === 0) {
+      console.log("Kitchen Analysis: No pending orders, skipping Gemini call")
       return NextResponse.json({ alerts: [] })
     }
 
     // Initialize Vertex AI
+    console.log(`Kitchen Analysis: Using project ${PROJECT_ID} in ${LOCATION}`)
     const vertex_ai = new VertexAI({ project: PROJECT_ID, location: LOCATION })
     const generativeModel = vertex_ai.getGenerativeModel({
       model: "gemini-2.5-flash", // Updated to gemini-2.5-flash as requested
@@ -60,21 +64,24 @@ export async function GET() {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     }
 
+    console.log("Kitchen Analysis: Sending prompt to Gemini...")
     const response = await generativeModel.generateContent(request)
     let responseText = response.response.candidates?.[0].content.parts?.[0].text || "[]"
+    console.log("Kitchen Analysis: Received response from Gemini:", responseText)
     
     // Clean up potential markdown code blocks from the response
     responseText = responseText.replace(/```json\n?|```/g, "").trim()
     
     try {
       const result = JSON.parse(responseText)
+      console.log(`Kitchen Analysis: Successfully parsed ${result.length} alerts`)
       return NextResponse.json({ alerts: Array.isArray(result) ? result : [] })
     } catch (parseError) {
-      console.error("Failed to parse Gemini response:", responseText)
+      console.error("Kitchen Analysis: Failed to parse Gemini response:", responseText)
       return NextResponse.json({ alerts: [] })
     }
   } catch (error: any) {
-    console.error("Error analyzing kitchen queue with Vertex AI:", error)
+    console.error("Kitchen Analysis: Error analyzing kitchen queue with Vertex AI:", error)
     
     // Fallback alerts if Vertex AI is not configured or fails
     // This ensures the UI still shows something useful during the demo

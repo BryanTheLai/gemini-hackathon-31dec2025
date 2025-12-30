@@ -55,15 +55,18 @@ export function KitchenManager() {
 
   const fetchOrders = async () => {
     try {
+      console.log("Kitchen: Fetching orders...")
       const response = await fetch("/api/orders")
       if (response.ok) {
         const data = await response.json()
         const pendingOrders = data.filter((o: Order) => o.status === "pending").sort((a: Order, b: Order) => a.orderNumber - b.orderNumber)
+        console.log(`Kitchen: Received ${pendingOrders.length} pending orders`)
         
         // Announce new orders
         if (isVoiceEnabled && typeof window !== "undefined") {
           pendingOrders.forEach((order: Order) => {
             if (!announcedOrders.has(order.id)) {
+              console.log(`Kitchen: Announcing new order #${order.orderNumber}`)
               const utterance = new SpeechSynthesisUtterance(`NEW ORDER: #${order.orderNumber.toString().padStart(3, '0')}`)
               utterance.rate = 1.2
               window.speechSynthesis.speak(utterance)
@@ -75,7 +78,7 @@ export function KitchenManager() {
         setOrders(pendingOrders)
       }
     } catch (error) {
-      console.error("Failed to fetch orders:", error)
+      console.error("Kitchen: Failed to fetch orders:", error)
     } finally {
       setLoading(false)
     }
@@ -86,12 +89,14 @@ export function KitchenManager() {
       setAlerts([])
       return
     }
+    console.log("Kitchen: Fetching AI alerts...")
     setIsAnalyzing(true)
     try {
       const response = await fetch("/api/kitchen/analyze")
       if (response.ok) {
         const data = await response.json()
         const newAlerts = data.alerts || []
+        console.log(`Kitchen: Received ${newAlerts.length} AI alerts`)
         setAlerts(newAlerts)
         setLastAnalysisTime(new Date())
         if (newAlerts.length > 0) {
@@ -99,7 +104,7 @@ export function KitchenManager() {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch alerts:", error)
+      console.error("Kitchen: Failed to fetch alerts:", error)
     } finally {
       setIsAnalyzing(false)
     }

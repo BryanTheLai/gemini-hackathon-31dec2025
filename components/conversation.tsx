@@ -110,14 +110,17 @@ export function Conversation() {
 
   const startConversation = useCallback(async () => {
     try {
+      console.log("Voice: Starting conversation session...")
       setError(null)
       // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true })
+      console.log("Voice: Microphone permission granted")
 
       // Fetch the signed URL from our API
       const response = await fetch("/api/conversation-token")
       if (!response.ok) {
-        throw new Error(`Failed to get token: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to get token: ${response.statusText || response.status}`)
       }
       const { signedUrl } = await response.json()
 
@@ -125,21 +128,23 @@ export function Conversation() {
         throw new Error("No signed URL returned from API")
       }
 
+      console.log("Voice: Connecting to ElevenLabs...")
       // Start the conversation with the signed URL
       await conversation.startSession({
         signedUrl, // Use the signed URL directly
       })
     } catch (err) {
-      console.error("Failed to start conversation:", err)
+      console.error("Voice: Failed to start conversation:", err)
       setError(err instanceof Error ? err.message : "Failed to start conversation")
     }
   }, [conversation])
 
   const stopConversation = useCallback(async () => {
     try {
+      console.log("Voice: Ending conversation session...")
       await conversation.endSession()
     } catch (err) {
-      console.error("Failed to stop conversation:", err)
+      console.error("Voice: Failed to stop conversation:", err)
     }
   }, [conversation])
 

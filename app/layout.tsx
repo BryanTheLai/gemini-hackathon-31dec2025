@@ -1,7 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import "./globals.css"
 
@@ -36,7 +35,6 @@ export default function RootLayout({
           {children}
         </Suspense>
         <Toaster />
-        <Analytics />
       </body>
     </html>
   )
