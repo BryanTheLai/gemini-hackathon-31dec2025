@@ -40,8 +40,9 @@ export async function GET() {
       You are the Head Chef AI for "Gemini Burgers".
       Analyze these orders and give 3-4 IMMEDIATE, short instructions for the kitchen staff.
       
-      Orders:
+      <Orders>
       ${JSON.stringify(orders, null, 2)}
+      <Orders/>
       
       STRICT RULES:
       1. **Format**: "ACTION [Quantity] [Item] [Reason/Priority]"
