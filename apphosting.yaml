@@ -1,0 +1,19 @@
+# Firebase App Hosting configuration
+# Documentation: https://firebase.google.com/docs/app-hosting/configure
+
+env:
+  - variable: NEXT_PUBLIC_AGENT_ID
+    value: "agent_9701kdq09amsekt9e33kq1kfv66n"
+  - variable: GOOGLE_CLOUD_PROJECT
+    value: "gemini-burgers-482816"
+  - variable: GOOGLE_CLOUD_LOCATION
+    value: "us-central1"
+
+# Secrets should be stored in Cloud Secret Manager
+# You can create them via the Firebase Console or gcloud CLI
+# Example: gcloud secrets create ELEVENLABS_API_KEY --replication-policy="automatic"
+secrets:
+  - variable: ELEVENLABS_API_KEY
+    secret: ELEVENLABS_API_KEY
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
