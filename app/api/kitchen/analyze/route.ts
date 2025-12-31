@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server"
 import { VertexAI } from "@google-cloud/vertexai"
 import { globalStore } from "@/lib/store"
-import tracer, { sendGeminiMetrics, createDatadogCase, logToDatadog } from "@/lib/datadog"
 
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT
 const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || "us-central1"
 
 export async function GET() {
-  return tracer.trace('kitchen.analyze', async (span) => {
-    if (!PROJECT_ID) {
+  if (!PROJECT_ID) {
     console.error("Kitchen Analysis Error: GOOGLE_CLOUD_PROJECT is not set in .env")
     return NextResponse.json({ 
       alerts: [
@@ -17,8 +15,6 @@ export async function GET() {
       error: "Configuration Missing"
     })
   }
-
-  logToDatadog("Starting kitchen analysis", "info", { orderCount: globalStore.getOrders().length });
 
   console.log("Kitchen Analysis: Starting analysis...")
   try {
@@ -72,21 +68,8 @@ export async function GET() {
     }
 
     console.log("Kitchen Analysis: Sending prompt to Gemini...")
-    const response = await tracer.trace('gemini.generate_content', async (geminiSpan) => {
-      geminiSpan?.setTag('llm.model', 'gemini-2.0-flash')
-      const res = await generativeModel.generateContent(request)
-      
-      const usage = res.response.usageMetadata
-      if (usage) {
-        const promptTokens = usage.promptTokenCount || 0
-        const completionTokens = usage.candidatesTokenCount || 0
-        geminiSpan?.setTag('llm.tokens.prompt', promptTokens)
-        geminiSpan?.setTag('llm.tokens.completion', completionTokens)
-        sendGeminiMetrics({ prompt: promptTokens, completion: completionTokens }, 'gemini-2.0-flash')
-        logToDatadog("Gemini analysis complete", "info", { promptTokens, completionTokens });
-      }
-      return res
-    })
+    const response = await generativeModel.generateContent(request)
+    
     let responseText = response.response.candidates?.[0].content.parts?.[0].text || "[]"
     console.log("Kitchen Analysis: Received response from Gemini:", responseText)
     
@@ -104,13 +87,6 @@ export async function GET() {
   } catch (error: any) {
     console.error("Kitchen Analysis: Error analyzing kitchen queue with Vertex AI:", error)
     
-    // Create a Datadog Case for the AI Engineer
-    await createDatadogCase(
-      `Gemini Analysis Failure: ${error.message}`,
-      `The kitchen analysis failed. \n\nError: ${error.message}\n\nContext: Vertex AI / Gemini 2.0 Flash`,
-      2 // High priority
-    )
-    
     // Fallback alerts if Vertex AI is not configured or fails
     // This ensures the UI still shows something useful during the demo
     const fallbackAlerts = [
@@ -124,5 +100,4 @@ export async function GET() {
       message: error.message || "Internal server error" 
     })
   }
-  })
 }

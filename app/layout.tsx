@@ -21,7 +21,6 @@ export const metadata: Metadata = {
 }
 
 import { Toaster } from "@/components/ui/toaster"
-import { DatadogRumInit } from "@/components/datadog-rum-init"
 
 export default function RootLayout({
   children,
@@ -31,7 +30,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`font-sans ${inter.variable} ${jetbrainsMono.variable}`}>
-        <DatadogRumInit />
         <Suspense fallback={<div>Loading...</div>}>
           <div className="animated-bg"></div>
           {children}
