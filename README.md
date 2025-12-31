@@ -1,4 +1,4 @@
-# 🤖 24/7 Humanless DriveThru
+# 🤖 24/7 Humanless DriveThru 
 
 We fired the staff. Gemini runs the kitchen now. No attitude, no mistakes, no payroll. An elite, voice-driven drive-thru experience powered by **ElevenLabs Conversational AI** and **Google Vertex AI (Gemini)**. Built for the Dec 31, 2025 Hackathon.
 
