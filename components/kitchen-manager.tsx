@@ -39,16 +39,32 @@ export function KitchenManager() {
   const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set())
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true)
 
+  const stopVoice = () => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+  }
+
   const announceAlerts = (newAlerts: KitchenAlert[]) => {
     if (!isVoiceEnabled || typeof window === "undefined") return
 
     newAlerts.forEach(alert => {
-      if (!spokenAlerts.has(alert.message)) {
+      // Normalize message to avoid duplicates due to punctuation/whitespace
+      const normalizedMessage = alert.message.toLowerCase().replace(/[^\w\s]/gi, '').trim()
+      const alertId = `${alert.type}:${normalizedMessage}`
+      
+      if (!spokenAlerts.has(alertId)) {
         const utterance = new SpeechSynthesisUtterance(alert.message.replace(/[^\w\s]/gi, ''))
-        utterance.rate = 1.1 // Slightly faster for kitchen environment
+        utterance.rate = 1.0 // Natural speed
         utterance.pitch = 1.0
+        
+        // Try to find a better voice if available
+        const voices = window.speechSynthesis.getVoices()
+        const betterVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Natural"))
+        if (betterVoice) utterance.voice = betterVoice
+
         window.speechSynthesis.speak(utterance)
-        setSpokenAlerts(prev => new Set(prev).add(alert.message))
+        setSpokenAlerts(prev => new Set(prev).add(alertId))
       }
     })
   }
@@ -68,7 +84,12 @@ export function KitchenManager() {
             if (!announcedOrders.has(order.id)) {
               console.log(`Kitchen: Announcing new order #${order.orderNumber}`)
               const utterance = new SpeechSynthesisUtterance(`NEW ORDER: #${order.orderNumber.toString().padStart(3, '0')}`)
-              utterance.rate = 1.2
+              utterance.rate = 1.1
+              
+              const voices = window.speechSynthesis.getVoices()
+              const betterVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Natural"))
+              if (betterVoice) utterance.voice = betterVoice
+
               window.speechSynthesis.speak(utterance)
               setAnnouncedOrders(prev => new Set(prev).add(order.id))
             }
@@ -122,6 +143,7 @@ export function KitchenManager() {
     return () => {
       clearInterval(orderInterval)
       clearInterval(alertInterval)
+      stopVoice()
     }
   }, [isAiEnabled]) // Re-run when AI is toggled
 
@@ -202,7 +224,11 @@ export function KitchenManager() {
         </div>
         <div className="flex items-center gap-2">
           <Button 
-            onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
+            onClick={() => {
+              const newState = !isVoiceEnabled
+              setIsVoiceEnabled(newState)
+              if (!newState) stopVoice()
+            }}
             variant="outline"
             className={`rounded-2xl w-12 h-12 p-0 border-white/10 transition-all duration-300 ${isVoiceEnabled ? "text-primary bg-primary/10 border-primary/20" : "text-muted-foreground"}`}
             title={isVoiceEnabled ? "Mute Announcements" : "Unmute Announcements"}

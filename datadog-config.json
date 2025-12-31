@@ -1,0 +1,116 @@
+{
+  "monitors": [
+    {
+      "name": "High Gemini Latency",
+      "type": "metric alert",
+      "query": "avg(last_5m):avg:gemini.generate_content.duration{service:gemini-kitchen-ai} > 2",
+      "message": "{{#is_alert}}🚨 Gemini latency is high! Average latency over 2s. @slack-kitchen-ops{{/is_alert}}",
+      "tags": ["service:gemini-kitchen-ai", "team:ai-ops"],
+      "options": {
+        "thresholds": {
+          "critical": 2,
+          "warning": 1.5
+        }
+      }
+    },
+    {
+      "name": "Gemini Error Rate",
+      "type": "metric alert",
+      "query": "sum(last_5m):sum:gemini.generate_content.errors{service:gemini-kitchen-ai}.as_count() / sum:gemini.generate_content.hits{service:gemini-kitchen-ai}.as_count() > 0.05",
+      "message": "🚨 Gemini error rate is above 5%! Check logs for details. @slack-kitchen-ops",
+      "tags": ["service:gemini-kitchen-ai", "team:ai-ops"],
+      "options": {
+        "thresholds": {
+          "critical": 0.05,
+          "warning": 0.02
+        }
+      }
+    },
+    {
+      "name": "High Token Cost Alert",
+      "type": "metric alert",
+      "query": "sum(last_1h):sum:gemini.cost{service:gemini-kitchen-ai} > 10",
+      "message": "💰 Gemini cost exceeded $10 in the last hour! Check for runaway loops. @finance-team",
+      "tags": ["service:gemini-kitchen-ai", "cost-control"],
+      "options": {
+        "thresholds": {
+          "critical": 10,
+          "warning": 5
+        }
+      }
+    }
+  ],
+  "slos": [
+    {
+      "name": "Gemini Latency SLO",
+      "type": "metric",
+      "description": "99% of Gemini calls should be under 2 seconds",
+      "query": {
+        "numerator": "count:gemini.generate_content.duration{service:gemini-kitchen-ai, @duration:<2s}",
+        "denominator": "count:gemini.generate_content.duration{service:gemini-kitchen-ai}"
+      },
+      "thresholds": [
+        {
+          "timeframe": "7d",
+          "target": 99,
+          "warning": 99.5
+        }
+      ]
+    }
+  ],
+  "dashboards": [
+    {
+      "title": "Gemini Kitchen AI Observability",
+      "description": "End-to-end monitoring for Gemini-powered kitchen assistant",
+      "widgets": [
+        {
+          "definition": {
+            "type": "timeseries",
+            "requests": [
+              {
+                "q": "avg:gemini.tokens.prompt{service:gemini-kitchen-ai}, avg:gemini.tokens.completion{service:gemini-kitchen-ai}",
+                "display_type": "area"
+              }
+            ],
+            "title": "Token Usage (Prompt vs Completion)"
+          }
+        },
+        {
+          "definition": {
+            "type": "query_value",
+            "requests": [
+              {
+                "q": "sum:gemini.cost{service:gemini-kitchen-ai}",
+                "aggregator": "sum"
+              }
+            ],
+            "title": "Total Estimated Cost (USD)"
+          }
+        },
+        {
+          "definition": {
+            "type": "timeseries",
+            "requests": [
+              {
+                "q": "avg:gemini.generate_content.duration{service:gemini-kitchen-ai}",
+                "display_type": "line"
+              }
+            ],
+            "title": "Gemini Latency (s)"
+          }
+        },
+        {
+          "definition": {
+            "type": "toplist",
+            "requests": [
+              {
+                "q": "top(sum:gemini.tokens.prompt{service:gemini-kitchen-ai} by {model}, 10, 'sum', 'desc')"
+              }
+            ],
+            "title": "Top Models by Token Usage"
+          }
+        }
+      ]
+    }
+  ]
+}
