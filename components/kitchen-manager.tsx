@@ -115,7 +115,11 @@ export function KitchenManager() {
       const alertId = `${alert.type}:${normalizedMessage}`
       
       if (!spokenAlertsRef.current.has(alertId)) {
-        setAudioQueue(prev => [...prev, alert.message])
+        // Double check the queue doesn't already have this exact message
+        setAudioQueue(prev => {
+          if (prev.includes(alert.message)) return prev
+          return [...prev, alert.message]
+        })
         spokenAlertsRef.current.add(alertId)
       }
     })
@@ -137,7 +141,13 @@ export function KitchenManager() {
             if (!announcedOrdersRef.current.has(order.id)) {
               console.log(`Kitchen: Announcing new order #${order.orderNumber}`)
               const itemSummary = order.items.map(i => `${i.quantity} ${i.name}`).join(", ")
-              setAudioQueue(prev => [...prev, `LISTEN UP! New order number ${order.orderNumber}. I need ${itemSummary}. MOVE IT! Let's go people!`])
+              const announcement = `LISTEN UP! New order number ${order.orderNumber}. I need ${itemSummary}. MOVE IT! Let's go people!`
+              
+              setAudioQueue(prev => {
+                if (prev.includes(announcement)) return prev
+                return [...prev, announcement]
+              })
+              
               announcedOrdersRef.current.add(order.id)
               hasNewOrder = true
             }
@@ -240,6 +250,11 @@ export function KitchenManager() {
   const seedOrders = async () => {
     try {
       setLoading(true)
+      // Clear refs before seeding to prevent double announcements of the same seed data
+      announcedOrdersRef.current.clear()
+      spokenAlertsRef.current.clear()
+      setAudioQueue([]) // Clear any pending voice lines
+      
       await fetch("/api/seed")
       await fetchOrders()
       await fetchAlerts()
@@ -298,7 +313,7 @@ export function KitchenManager() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-black text-white uppercase tracking-wider text-sm">Gemini Kitchen Intelligence</h3>
+              <h3 className="font-black text-white uppercase tracking-wider text-sm">Humanless Kitchen Intelligence</h3>
               {isAnalyzing && (
                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] animate-pulse">
                   ANALYZING...

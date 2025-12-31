@@ -90,7 +90,7 @@ export async function GET() {
     // Fallback alerts if Vertex AI is not configured or fails
     // This ensures the UI still shows something useful during the demo
     const fallbackAlerts = [
-      { type: "efficiency", message: "💡 Tip: Keep the grill hot for incoming burger orders." },
+      { type: "efficiency", message: `⚠️ AI Offline: ${error.message || "Check Cloud Console"}` },
       { type: "bulk-prep", message: "🚀 High demand expected. Prep extra fries." }
     ]
     
