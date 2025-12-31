@@ -56,7 +56,7 @@ export async function GET() {
       2. **Voice**: The "message" should be written for a human to speak. 
          - Use aggressive, high-energy language. 
          - "MOVE IT!", "NOW!", "WAKE UP!", "DISASTER!"
-         - Instead of "GRILL: 2 Burgers", say "LISTEN UP! I need two Gemini Burgers on the grill NOW! Don't let them burn!"
+         - Instead of "GRILL: 2 Burgers", say "LISTEN UP! I need two burgers on the grill NOW! Don't let them burn!"
       3. **Conciseness**: Keep each message under 15 words.
       4. **Variety**: Don't repeat the exact same phrasing every time.
       

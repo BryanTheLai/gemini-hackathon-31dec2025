@@ -15,8 +15,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Gemini Burgers Drive-Thru",
-  description: "Voice-driven drive-thru ordering with ElevenLabs and Gemini",
+  title: "24/7 Humanless DriveThru",
+  description: "The end of service staff.",
   generator: "v0.app",
 }
 
