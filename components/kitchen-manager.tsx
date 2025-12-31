@@ -37,6 +37,7 @@ export function KitchenManager() {
   const [lastAnalysisTime, setLastAnalysisTime] = useState<Date | null>(null)
   const spokenAlertsRef = useRef<Set<string>>(new Set())
   const announcedOrdersRef = useRef<Set<string>>(new Set())
+  const initialLoadDoneRef = useRef(false)
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true)
   const [audioQueue, setAudioQueue] = useState<string[]>([])
   const [isPlaying, setIsPlaying] = useState(false)
@@ -125,7 +126,7 @@ export function KitchenManager() {
     })
   }
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (skipAnnouncements = false) => {
     try {
       console.log("Kitchen: Fetching orders...")
       const response = await fetch("/api/orders")
@@ -134,8 +135,19 @@ export function KitchenManager() {
         const pendingOrders = data.filter((o: Order) => o.status === "pending").sort((a: Order, b: Order) => a.orderNumber - b.orderNumber)
         console.log(`Kitchen: Received ${pendingOrders.length} pending orders`)
         
-        // Announce new orders
-        if (isVoiceEnabled && isStarted) {
+        // On initial load, just mark existing orders as announced without speaking
+        if (!initialLoadDoneRef.current) {
+          pendingOrders.forEach((order: Order) => {
+            announcedOrdersRef.current.add(order.id)
+          })
+          initialLoadDoneRef.current = true
+          console.log(`Kitchen: Initial load - marked ${pendingOrders.length} orders as already announced`)
+          setOrders(pendingOrders)
+          return
+        }
+        
+        // Announce new orders only if not skipping and conditions are met
+        if (!skipAnnouncements && isVoiceEnabled && isStarted) {
           let hasNewOrder = false
           pendingOrders.forEach((order: Order) => {
             if (!announcedOrdersRef.current.has(order.id)) {
@@ -153,6 +165,11 @@ export function KitchenManager() {
             }
           })
           if (hasNewOrder) playDing()
+        } else if (skipAnnouncements) {
+          // Mark orders as announced without speaking (used during startup)
+          pendingOrders.forEach((order: Order) => {
+            announcedOrdersRef.current.add(order.id)
+          })
         }
 
         setOrders(pendingOrders)
@@ -265,16 +282,15 @@ export function KitchenManager() {
     }
   }
 
-  const startKitchen = () => {
+  const startKitchen = async () => {
     setIsStarted(true)
     // Play a silent sound to unlock audio context
     const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3")
     audio.volume = 0
     audio.play().catch(() => {})
     
-    // Initialize sets so we don't announce everything at once
-    const currentOrderIds = orders.map(o => o.id)
-    announcedOrdersRef.current = new Set(currentOrderIds)
+    // Fetch orders with skipAnnouncements=true to mark existing as announced
+    await fetchOrders(true)
     
     // Also fetch alerts immediately
     fetchAlerts()
@@ -446,7 +462,7 @@ export function KitchenManager() {
           >
             CLEAR ALL
           </Button>
-          <Button onClick={fetchOrders} variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl">
+          <Button onClick={() => fetchOrders()} variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl">
             <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>

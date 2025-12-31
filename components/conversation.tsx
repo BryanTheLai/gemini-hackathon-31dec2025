@@ -51,14 +51,23 @@ export function Conversation() {
         try {
           const parsedItems = typeof items === "string" ? JSON.parse(items) : items
           
-          // Ensure each item has a price
-          const itemsWithPrices = parsedItems.map((item: OrderItem) => ({
-            ...item,
-            price: item.price || getPriceByName(item.name)
-          }))
+          // ALWAYS get price from menu - never trust agent-provided prices
+          const itemsWithPrices = parsedItems.map((item: OrderItem) => {
+            const menuPrice = getPriceByName(item.name)
+            if (menuPrice === 0) {
+              console.warn(`Item "${item.name}" not found in menu`)
+            }
+            return {
+              name: item.name,
+              quantity: item.quantity,
+              notes: item.notes,
+              price: menuPrice // Always use menu price, ignore agent price
+            }
+          })
           
           setDraftOrder(itemsWithPrices)
-          return "Order board updated successfully"
+          const itemTotal = itemsWithPrices.reduce((sum: number, i: OrderItem) => sum + (i.price || 0) * i.quantity, 0)
+          return `Order board updated. Current total: $${itemTotal.toFixed(2)}`
         } catch (err) {
           console.error("Failed to parse order items:", err)
           return "Error updating order board: Invalid format"
