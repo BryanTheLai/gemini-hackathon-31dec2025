@@ -38,10 +38,16 @@ export function KitchenManager() {
   const spokenAlertsRef = useRef<Set<string>>(new Set())
   const announcedOrdersRef = useRef<Set<string>>(new Set())
   const initialLoadDoneRef = useRef(false)
+  const isPlayingRef = useRef(false)
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true)
   const [audioQueue, setAudioQueue] = useState<string[]>([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [isStarted, setIsStarted] = useState(false)
+
+  // Sync isPlaying state with ref for use in async callbacks
+  useEffect(() => {
+    isPlayingRef.current = isPlaying
+  }, [isPlaying])
 
   const stopVoice = () => {
     setIsPlaying(false)
@@ -64,11 +70,12 @@ export function KitchenManager() {
   }
 
   const playNextInQueue = async () => {
-    if (audioQueue.length === 0 || isPlaying || !isVoiceEnabled) {
+    if (audioQueue.length === 0 || isPlayingRef.current || !isVoiceEnabled) {
       if (!isVoiceEnabled) setAudioQueue([])
       return
     }
 
+    isPlayingRef.current = true
     setIsPlaying(true)
     const nextText = audioQueue[0]
     setAudioQueue(prev => prev.slice(1))
@@ -85,20 +92,25 @@ export function KitchenManager() {
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
         audio.onended = () => {
+          isPlayingRef.current = false
           setIsPlaying(false)
-          playNextInQueue()
+          // useEffect will trigger next item automatically
+        }
+        audio.onerror = () => {
+          console.error("Audio playback error")
+          isPlayingRef.current = false
+          setIsPlaying(false)
         }
         await audio.play()
       } else {
-        // Removed robotic fallback as requested
         console.error("ElevenLabs failed, skipping voice announcement")
+        isPlayingRef.current = false
         setIsPlaying(false)
-        playNextInQueue()
       }
     } catch (error) {
       console.error("Voice playback failed:", error)
+      isPlayingRef.current = false
       setIsPlaying(false)
-      playNextInQueue()
     }
   }
 
