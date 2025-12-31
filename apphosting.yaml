@@ -12,6 +12,16 @@ env:
     secret: ELEVENLABS_API_KEY
   - variable: GEMINI_API_KEY
     secret: GEMINI_API_KEY
+  - variable: DD_API_KEY
+    secret: DD_API_KEY
+  - variable: DD_APP_KEY
+    secret: DD_APP_KEY
+  - variable: DD_SITE
+    value: "us5.datadoghq.com"
+  - variable: NEXT_PUBLIC_DATADOG_CLIENT_TOKEN
+    value: "puba71b0c96c183b94dcdb42a5205f2463c"
+  - variable: NEXT_PUBLIC_DATADOG_APPLICATION_ID
+    value: "8ddbe50e-8043-4963-86f6-82cb6d39b69c"
 
 # Secrets are now included in the env section for better compatibility
 # Ensure the service account has 'Secret Manager Secret Accessor' role
