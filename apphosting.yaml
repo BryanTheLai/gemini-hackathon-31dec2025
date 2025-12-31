@@ -3,7 +3,7 @@
 
 env:
   - variable: NEXT_PUBLIC_AGENT_ID
-    value: "agent_9701kdq09amsekt9e33kq1kfv66n"
+    value: "agent_7401kdspxac6eg4bsspd4ab1zsed"
   - variable: GOOGLE_CLOUD_PROJECT
     value: "gemini-burgers-482816"
   - variable: GOOGLE_CLOUD_LOCATION
