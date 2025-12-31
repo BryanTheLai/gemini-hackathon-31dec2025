@@ -1,4 +1,4 @@
-# Unstaffed: AI & Tool Calling Setup Guide
+# 24/7 Humanless DriveThru: AI & Tool Calling Setup Guide
 
 This guide explains how to set up **Tool Calling** with ElevenLabs and how to integrate **Google Gemini** (via Vertex AI or the GenAI SDK) for advanced kitchen logic.
 
@@ -100,42 +100,9 @@ GOOGLE_CLOUD_LOCATION=us-central1
 
 ---
 
-## 3. Deployment to Google Cloud Run
+## 3. Deployment
 
-Since you want to host this on Google Cloud, Cloud Run is the best choice for a Next.js app.
-
-### Step 1: Build and Push to Artifact Registry
-First, enable the necessary services:
-```bash
-gcloud services enable artifactregistry.googleapis.com run.googleapis.com cloudbuild.googleapis.com
-```
-
-Create a repository (if you haven't):
-```bash
-gcloud artifacts repositories create gemini-repo --repository-format=docker --location=us-central1
-```
-
-Build and push the image:
-```bash
-gcloud builds submit --tag us-central1-docker.pkg.dev/gemini-burgers-482816/gemini-repo/app:latest
-```
-
-### Step 2: Deploy to Cloud Run
-```bash
-gcloud run deploy gemini-burgers \
-  --image us-central1-docker.pkg.dev/gemini-burgers-482816/gemini-repo/app:latest \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars="GOOGLE_CLOUD_PROJECT=gemini-burgers-482816,GOOGLE_CLOUD_LOCATION=us-central1,ELEVENLABS_API_KEY=sk_25f757e1b4575e48a4d2e28b2463f7a1fbcf57fcf43accfe,NEXT_PUBLIC_AGENT_ID=agent_9701kdq09amsekt9e33kq1kfv66n"
-```
-
-### Step 3: Service Account in Cloud Run
-When running on Cloud Run, you **don't** need `service-account.json`. 
-1. Go to the Cloud Run service in the console.
-2. Click **Security**.
-3. Ensure the **Compute Engine default service account** (or the one you assigned) has the **Vertex AI User** role.
-4. The app will automatically authenticate using the metadata server.
+Deploy to Vercel or any Node.js hosting provider. Ensure environment variables are set.
 
 ---
 
@@ -145,5 +112,4 @@ When running on Cloud Run, you **don't** need `service-account.json`.
 - [x] **ElevenLabs**: Tools `update_order_board` and `submit_order` configured.
 - [x] **ElevenLabs**: `end_call` system tool enabled.
 - [x] **Stale Closures**: Fixed using `useRef` in `conversation.tsx`.
-- [x] **Docker**: `output: 'standalone'` enabled in `next.config.ts`.
-- [x] **Latency**: Optimized for US (us-central1).
+- [x] **Latency**: Optimized for SE Asia (asia-southeast1).

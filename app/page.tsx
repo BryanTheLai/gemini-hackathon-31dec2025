@@ -14,9 +14,9 @@ export default function Home() {
           </div>
           <div>
             <h1 className="text-3xl font-black tracking-tighter text-white leading-none">
-              UN<span className="text-primary">STAFFED</span>
+              HUMAN<span className="text-primary">LESS</span>
             </h1>
-            <p className="text-[10px] text-primary font-bold tracking-[0.2em] uppercase mt-1">Zero Humans. Just Efficiency.</p>
+            <p className="text-[10px] text-primary font-bold tracking-[0.2em] uppercase mt-1">24/7 Drive-Thru. Zero Humans.</p>
           </div>
         </div>
         <Link href="/kitchen">

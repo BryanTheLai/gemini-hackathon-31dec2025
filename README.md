@@ -1,4 +1,4 @@
-# 🤖 Unstaffed: The End of Service
+# 🤖 24/7 Humanless DriveThru
 
 We fired the staff. Gemini runs the kitchen now. No attitude, no mistakes, no payroll. An elite, voice-driven drive-thru experience powered by **ElevenLabs Conversational AI** and **Google Vertex AI (Gemini)**. Built for the Dec 31, 2025 Hackathon.
 
@@ -9,7 +9,6 @@ We fired the staff. Gemini runs the kitchen now. No attitude, no mistakes, no pa
 - **⚡ Real-time Order Board**: Instant visual feedback as you speak, using ElevenLabs Tool Calling.
 - **👨‍🍳 Kitchen Display System (KDS)**: A dedicated view for staff to manage and complete orders.
 - **🌏 Optimized for SE Asia**: Configured for `asia-southeast1` (Singapore) to provide the best experience for users in Malaysia.
-- **🐳 Production Ready**: Fully Dockerized and ready for deployment to **Google Cloud Run**.
 
 ## 🛠️ Tech Stack
 
@@ -17,7 +16,6 @@ We fired the staff. Gemini runs the kitchen now. No attitude, no mistakes, no pa
 - **UI**: React 19, Tailwind CSS v4, Framer Motion, Lucide React
 - **Voice**: ElevenLabs Conversational AI SDK
 - **AI**: Google Cloud Vertex AI (@google-cloud/vertexai)
-- **Deployment**: Docker, Google Cloud Run
 
 ## 🚦 Getting Started
 
@@ -42,9 +40,6 @@ We fired the staff. Gemini runs the kitchen now. No attitude, no mistakes, no pa
    ```bash
    npm run dev
    ```
-
-### 3. Deployment
-See the [SETUP_GUIDE.md](SETUP_GUIDE.md) for full instructions on deploying to **Google Cloud Run**.
 
 ## 📖 Documentation
 - [Setup Guide](SETUP_GUIDE.md): Detailed instructions for Tool Calling and Vertex AI.
