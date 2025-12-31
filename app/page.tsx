@@ -14,9 +14,9 @@ export default function Home() {
           </div>
           <div>
             <h1 className="text-3xl font-black tracking-tighter text-white leading-none">
-              GEMINI <span className="text-primary">BURGERS</span>
+              UN<span className="text-primary">STAFFED</span>
             </h1>
-            <p className="text-[10px] text-primary font-bold tracking-[0.2em] uppercase mt-1">Elite Drive-Thru Experience</p>
+            <p className="text-[10px] text-primary font-bold tracking-[0.2em] uppercase mt-1">Zero Humans. Just Efficiency.</p>
           </div>
         </div>
         <Link href="/kitchen">
@@ -38,10 +38,10 @@ export default function Home() {
           <div className="flex justify-between items-end">
             <div className="space-y-2">
               <h2 className="text-5xl font-black tracking-tighter leading-none text-white">
-                THE FUTURE OF <span className="text-primary">DRIVE-THRU</span>
+                THE END OF <span className="text-primary">SERVICE</span>
               </h2>
               <p className="text-muted-foreground text-base font-medium">
-                Speak naturally. No buttons. No friction. Just food.
+                Speak naturally. No humans. No friction. Just food.
               </p>
             </div>
             

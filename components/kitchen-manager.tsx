@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -35,36 +35,88 @@ export function KitchenManager() {
   const [isAiEnabled, setIsAiEnabled] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [lastAnalysisTime, setLastAnalysisTime] = useState<Date | null>(null)
-  const [spokenAlerts, setSpokenAlerts] = useState<Set<string>>(new Set())
-  const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set())
+  const spokenAlertsRef = useRef<Set<string>>(new Set())
+  const announcedOrdersRef = useRef<Set<string>>(new Set())
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true)
+  const [audioQueue, setAudioQueue] = useState<string[]>([])
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isStarted, setIsStarted] = useState(false)
 
   const stopVoice = () => {
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel()
+    setIsPlaying(false)
+    setAudioQueue([])
+    if (typeof window !== "undefined") {
+      const audios = document.getElementsByTagName('audio');
+      for(let i = 0; i < audios.length; i++) {
+        audios[i].pause();
+        audios[i].currentTime = 0;
+      }
     }
   }
 
+  const playDing = () => {
+    if (!isVoiceEnabled) return
+    // Elegant success chime for new orders
+    const ding = new Audio("https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3")
+    ding.volume = 0.4
+    ding.play().catch(e => console.error("Ding failed", e))
+  }
+
+  const playNextInQueue = async () => {
+    if (audioQueue.length === 0 || isPlaying || !isVoiceEnabled) {
+      if (!isVoiceEnabled) setAudioQueue([])
+      return
+    }
+
+    setIsPlaying(true)
+    const nextText = audioQueue[0]
+    setAudioQueue(prev => prev.slice(1))
+
+    try {
+      const response = await fetch("/api/kitchen/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: nextText }),
+      })
+
+      if (response.ok && isVoiceEnabled) {
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audio.onended = () => {
+          setIsPlaying(false)
+          playNextInQueue()
+        }
+        await audio.play()
+      } else {
+        // Removed robotic fallback as requested
+        console.error("ElevenLabs failed, skipping voice announcement")
+        setIsPlaying(false)
+        playNextInQueue()
+      }
+    } catch (error) {
+      console.error("Voice playback failed:", error)
+      setIsPlaying(false)
+      playNextInQueue()
+    }
+  }
+
+  useEffect(() => {
+    if (!isPlaying && audioQueue.length > 0 && isVoiceEnabled) {
+      playNextInQueue()
+    }
+  }, [audioQueue, isPlaying, isVoiceEnabled])
+
   const announceAlerts = (newAlerts: KitchenAlert[]) => {
-    if (!isVoiceEnabled || typeof window === "undefined") return
+    if (!isVoiceEnabled || !isStarted) return
 
     newAlerts.forEach(alert => {
-      // Normalize message to avoid duplicates due to punctuation/whitespace
       const normalizedMessage = alert.message.toLowerCase().replace(/[^\w\s]/gi, '').trim()
       const alertId = `${alert.type}:${normalizedMessage}`
       
-      if (!spokenAlerts.has(alertId)) {
-        const utterance = new SpeechSynthesisUtterance(alert.message.replace(/[^\w\s]/gi, ''))
-        utterance.rate = 1.0 // Natural speed
-        utterance.pitch = 1.0
-        
-        // Try to find a better voice if available
-        const voices = window.speechSynthesis.getVoices()
-        const betterVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Natural"))
-        if (betterVoice) utterance.voice = betterVoice
-
-        window.speechSynthesis.speak(utterance)
-        setSpokenAlerts(prev => new Set(prev).add(alertId))
+      if (!spokenAlertsRef.current.has(alertId)) {
+        setAudioQueue(prev => [...prev, alert.message])
+        spokenAlertsRef.current.add(alertId)
       }
     })
   }
@@ -79,21 +131,18 @@ export function KitchenManager() {
         console.log(`Kitchen: Received ${pendingOrders.length} pending orders`)
         
         // Announce new orders
-        if (isVoiceEnabled && typeof window !== "undefined") {
+        if (isVoiceEnabled && isStarted) {
+          let hasNewOrder = false
           pendingOrders.forEach((order: Order) => {
-            if (!announcedOrders.has(order.id)) {
+            if (!announcedOrdersRef.current.has(order.id)) {
               console.log(`Kitchen: Announcing new order #${order.orderNumber}`)
-              const utterance = new SpeechSynthesisUtterance(`NEW ORDER: #${order.orderNumber.toString().padStart(3, '0')}`)
-              utterance.rate = 1.1
-              
-              const voices = window.speechSynthesis.getVoices()
-              const betterVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Natural"))
-              if (betterVoice) utterance.voice = betterVoice
-
-              window.speechSynthesis.speak(utterance)
-              setAnnouncedOrders(prev => new Set(prev).add(order.id))
+              const itemSummary = order.items.map(i => `${i.quantity} ${i.name}`).join(", ")
+              setAudioQueue(prev => [...prev, `LISTEN UP! New order number ${order.orderNumber}. I need ${itemSummary}. MOVE IT! Let's go people!`])
+              announcedOrdersRef.current.add(order.id)
+              hasNewOrder = true
             }
           })
+          if (hasNewOrder) playDing()
         }
 
         setOrders(pendingOrders)
@@ -132,7 +181,14 @@ export function KitchenManager() {
   }
 
   useEffect(() => {
+    // Always fetch orders on mount to have initial state
     fetchOrders()
+  }, [])
+
+  useEffect(() => {
+    if (!isStarted) return
+
+    // Initial fetch for alerts if started
     if (isAiEnabled) {
       fetchAlerts()
     }
@@ -145,7 +201,7 @@ export function KitchenManager() {
       clearInterval(alertInterval)
       stopVoice()
     }
-  }, [isAiEnabled]) // Re-run when AI is toggled
+  }, [isAiEnabled, isStarted]) // Re-run when AI is toggled or started
 
   const toggleAi = () => {
     const newState = !isAiEnabled
@@ -171,8 +227,8 @@ export function KitchenManager() {
     if (confirm("Are you sure you want to clear all orders?")) {
       try {
         await fetch("/api/seed") // The seed endpoint clears orders first
-        setAnnouncedOrders(new Set())
-        setSpokenAlerts(new Set())
+        announcedOrdersRef.current.clear()
+        spokenAlertsRef.current.clear()
         fetchOrders()
         fetchAlerts()
       } catch (error) {
@@ -192,6 +248,40 @@ export function KitchenManager() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const startKitchen = () => {
+    setIsStarted(true)
+    // Play a silent sound to unlock audio context
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3")
+    audio.volume = 0
+    audio.play().catch(() => {})
+    
+    // Initialize sets so we don't announce everything at once
+    const currentOrderIds = orders.map(o => o.id)
+    announcedOrdersRef.current = new Set(currentOrderIds)
+    
+    // Also fetch alerts immediately
+    fetchAlerts()
+  }
+
+  if (!isStarted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
+        <div className="p-6 bg-primary/10 rounded-full animate-pulse">
+          <Volume2 className="w-16 h-16 text-primary" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">Kitchen Ready</h2>
+          <p className="text-muted-foreground max-w-md">
+            Click below to start the kitchen display and enable the AI Head Chef voice announcements.
+          </p>
+        </div>
+        <Button size="lg" onClick={startKitchen} className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-primary/20 transition-all">
+          Start Kitchen Display
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -223,6 +313,15 @@ export function KitchenManager() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => setAudioQueue(prev => [...prev, "LISTEN UP! The kitchen is a disaster! Get those orders out NOW or get out of my kitchen! MOVE IT!"])}
+            variant="outline"
+            className="rounded-2xl font-bold gap-2 h-12 px-4 border-white/10 text-white hover:bg-white/5"
+            title="Test Voice"
+          >
+            <Volume2 className="w-4 h-4" />
+            TEST
+          </Button>
           <Button 
             onClick={() => {
               const newState = !isVoiceEnabled

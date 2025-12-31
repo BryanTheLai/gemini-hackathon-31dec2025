@@ -1,4 +1,4 @@
-# Gemini Burgers: AI & Tool Calling Setup Guide
+# Unstaffed: AI & Tool Calling Setup Guide
 
 This guide explains how to set up **Tool Calling** with ElevenLabs and how to integrate **Google Gemini** (via Vertex AI or the GenAI SDK) for advanced kitchen logic.
 

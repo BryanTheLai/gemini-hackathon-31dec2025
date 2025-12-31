@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { VertexAI } from "@google-cloud/vertexai"
 import { globalStore } from "@/lib/store"
-import tracer, { sendGeminiMetrics, createDatadogCase } from "@/lib/datadog"
+import tracer, { sendGeminiMetrics, createDatadogCase, logToDatadog } from "@/lib/datadog"
 
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT
 const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || "us-central1"
@@ -18,6 +18,8 @@ export async function GET() {
     })
   }
 
+  logToDatadog("Starting kitchen analysis", "info", { orderCount: globalStore.getOrders().length });
+
   console.log("Kitchen Analysis: Starting analysis...")
   try {
     const orders = globalStore.getOrders().filter(o => o.status === "pending")
@@ -32,37 +34,37 @@ export async function GET() {
     console.log(`Kitchen Analysis: Using project ${PROJECT_ID} in ${LOCATION}`)
     const vertex_ai = new VertexAI({ project: PROJECT_ID, location: LOCATION })
     const generativeModel = vertex_ai.getGenerativeModel({
-      model: "gemini-2.5-flash", // Updated to gemini-2.5-flash as requested
+      model: "gemini-2.0-flash", // Fixed to 2.0 flash
       generationConfig: {
         responseMimeType: "application/json",
-        temperature: 0.1, // Lower temperature for more deterministic output
+        temperature: 0.4, // Slightly higher for more natural speech
       },
     })
     
     const prompt = `
-      You are the Head Chef AI for "Gemini Burgers".
-      Analyze these orders and give 3-4 IMMEDIATE, short instructions for the kitchen staff.
+      You are the Head Chef of "Unstaffed", and you are in the middle of the most stressful dinner rush of your life. 
+      You are authoritative, ruthless, and demand absolute perfection. Think Gordon Ramsay at his most intense.
+      
+      Analyze the pending orders and provide a natural, concise kitchen briefing.
       
       <Orders>
       ${JSON.stringify(orders, null, 2)}
       <Orders/>
       
       STRICT RULES:
-      1. **Format**: "ACTION [Quantity] [Item] [Reason/Priority]"
-      2. **Length**: Max 6-8 words per instruction.
-      3. **Consistency**: Be extremely consistent. If the orders haven't changed, the instructions should be identical.
-      4. **Priority**: 
-         - Start with "🔥 GRILL:" for burgers.
-         - Start with "🍟 FRY:" for sides.
-         - Start with "🥤 SHAKE:" for drinks.
-         - Start with "🚨 EXPEDITE:" for supervisor/volume issues.
-      5. **Examples**: 
-         - "🔥 GRILL: 8 patties now. 4 orders waiting."
-         - "🍟 FRY: 3 Asteroid Fries. High demand."
-         - "🚨 EXPEDITE: 6 pending. Need help at Expo."
+      1. **Format**: Return a JSON array of objects with "type" (bulk-prep, supervisor, efficiency) and "message".
+      2. **Voice**: The "message" should be written for a human to speak. 
+         - Use aggressive, high-energy language. 
+         - "MOVE IT!", "NOW!", "WAKE UP!", "DISASTER!"
+         - Instead of "GRILL: 2 Burgers", say "LISTEN UP! I need two Gemini Burgers on the grill NOW! Don't let them burn!"
+      3. **Conciseness**: Keep each message under 15 words.
+      4. **Variety**: Don't repeat the exact same phrasing every time.
       
-      Return a JSON array of objects with "type" (bulk-prep, supervisor, efficiency) and "message".
-      No fluff. Just orders.
+      Example Output:
+      [
+        { "type": "bulk-prep", "message": "GRILL STATION! Four patties down NOW! We are backing up! MOVE IT!" },
+        { "type": "efficiency", "message": "EXPO! Clear those shakes! It's a disaster out here! WAKE UP!" }
+      ]
     `
 
     const request = {
@@ -81,6 +83,7 @@ export async function GET() {
         geminiSpan?.setTag('llm.tokens.prompt', promptTokens)
         geminiSpan?.setTag('llm.tokens.completion', completionTokens)
         sendGeminiMetrics({ prompt: promptTokens, completion: completionTokens }, 'gemini-2.0-flash')
+        logToDatadog("Gemini analysis complete", "info", { promptTokens, completionTokens });
       }
       return res
     })

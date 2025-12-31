@@ -10,12 +10,32 @@ if (typeof window === 'undefined') {
   });
 }
 
-const configuration = client.createConfiguration();
+const configuration = client.createConfiguration({
+  authMethods: {
+    apiKeyAuth: process.env.DD_API_KEY,
+    appKeyAuth: process.env.DD_APP_KEY,
+  }
+});
 configuration.setServerVariables({
-  site: "us5.datadoghq.com"
+  site: process.env.DD_SITE || "us5.datadoghq.com"
 });
 const metricsApi = new v2.MetricsApi(configuration);
 const casesApi = new v2.CaseManagementApi(configuration);
+
+/**
+ * Log a message to Datadog (via console for Agent collection)
+ */
+export function logToDatadog(message: string, level: 'info' | 'warn' | 'error' = 'info', attributes: Record<string, any> = {}) {
+  const logEntry = {
+    message,
+    level,
+    service: 'gemini-burgers',
+    ddsource: 'nodejs',
+    ...attributes,
+    timestamp: new Date().toISOString()
+  };
+  console.log(`[DATADOG:${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
+}
 
 export async function createDatadogCase(title: string, description: string, priority: any = 3) {
   if (!process.env.DD_API_KEY || !process.env.DD_APP_KEY) {

@@ -1,6 +1,6 @@
-# 🍔 Gemini Burgers: The Future of Drive-Thru
+# 🤖 Unstaffed: The End of Service
 
-An elite, voice-driven drive-thru experience powered by **ElevenLabs Conversational AI** and **Google Vertex AI (Gemini)**. Built for the Dec 31, 2025 Hackathon.
+We fired the staff. Gemini runs the kitchen now. No attitude, no mistakes, no payroll. An elite, voice-driven drive-thru experience powered by **ElevenLabs Conversational AI** and **Google Vertex AI (Gemini)**. Built for the Dec 31, 2025 Hackathon.
 
 ## 🚀 Features
 
