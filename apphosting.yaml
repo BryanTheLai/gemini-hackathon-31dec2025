@@ -3,13 +3,15 @@
 
 env:
   - variable: NEXT_PUBLIC_AGENT_ID
-    value: "agent_7401kdspxac6eg4bsspd4ab1zsed"
+    value: "agent_9701kdq09amsekt9e33kq1kfv66n"
   - variable: GOOGLE_CLOUD_PROJECT
     value: "gemini-burgers-482816"
   - variable: GOOGLE_CLOUD_LOCATION
     value: "us-central1"
   - variable: ELEVENLABS_API_KEY
     secret: ELEVENLABS_API_KEY
+  - variable: KITCHEN_VOICE_ID
+    value: "JBFqnCBsd6RMkjVDRZzb"
   - variable: GEMINI_API_KEY
     secret: GEMINI_API_KEY
 

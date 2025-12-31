@@ -3,14 +3,16 @@ import { NextResponse } from "next/server"
 export async function POST(req: Request) {
   const { text } = await req.json()
   const apiKey = process.env.ELEVENLABS_API_KEY
-  // Using "George" (JBFqnCBsd6RMkjVDRZzb) - Warm, Captivating Storyteller
-  const voiceId = "JBFqnCBsd6RMkjVDRZzb" 
+  // Default to "George" (JBFqnCBsd6RMkjVDRZzb) if no voice ID is provided
+  const voiceId = process.env.KITCHEN_VOICE_ID || "JBFqnCBsd6RMkjVDRZzb" 
 
   if (!apiKey) {
+    console.error("Kitchen Voice: ELEVENLABS_API_KEY is missing")
     return NextResponse.json({ error: "ElevenLabs API Key missing" }, { status: 500 })
   }
 
   try {
+    console.log(`Kitchen Voice: Generating audio for text using voice: ${voiceId}`)
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
       {
@@ -34,8 +36,11 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("ElevenLabs API Error Response:", errorText)
-      throw new Error(`ElevenLabs API error: ${response.status} ${errorText}`)
+      console.error("Kitchen Voice: ElevenLabs API Error:", errorText)
+      return NextResponse.json({ 
+        error: "ElevenLabs API error", 
+        details: errorText 
+      }, { status: response.status })
     }
 
     const audioBuffer = await response.arrayBuffer()
@@ -45,7 +50,7 @@ export async function POST(req: Request) {
       },
     })
   } catch (error) {
-    console.error("ElevenLabs Error:", error)
+    console.error("Kitchen Voice: Internal Error:", error)
     return NextResponse.json({ error: "Failed to generate voice" }, { status: 500 })
   }
 }
