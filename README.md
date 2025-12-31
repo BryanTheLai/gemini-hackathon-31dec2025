@@ -8,6 +8,7 @@ We fired the staff. Gemini runs the kitchen now. No attitude, no mistakes, no pa
 - **🧠 AI Kitchen Manager**: Uses **Google Vertex AI (Gemini)** to analyze order queues, suggest bulk prep, and optimize kitchen efficiency.
 - **⚡ Real-time Order Board**: Instant visual feedback as you speak, using ElevenLabs Tool Calling.
 - **👨‍🍳 Kitchen Display System (KDS)**: A dedicated view for staff to manage and complete orders.
+- **🧹 Order Management**: Easily clear all orders or seed sample data for testing without repetitive voice announcements.
 - **🌏 Optimized for SE Asia**: Configured for `asia-southeast1` (Singapore) to provide the best experience for users in Malaysia.
 
 ## 🛠️ Tech Stack

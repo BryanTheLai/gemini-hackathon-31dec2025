@@ -193,7 +193,7 @@ export function KitchenManager() {
     }
   }
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = async (skipAnnouncements = false) => {
     if (!isAiEnabled) {
       setAlerts([])
       return
@@ -208,8 +208,14 @@ export function KitchenManager() {
         console.log(`Kitchen: Received ${newAlerts.length} AI alerts`)
         setAlerts(newAlerts)
         setLastAnalysisTime(new Date())
-        if (newAlerts.length > 0) {
+        if (newAlerts.length > 0 && !skipAnnouncements) {
           announceAlerts(newAlerts)
+        } else if (newAlerts.length > 0 && skipAnnouncements) {
+          // Mark as spoken without speaking
+          newAlerts.forEach((alert: KitchenAlert) => {
+            const alertId = `${alert.type}-${alert.message}`
+            spokenAlertsRef.current.add(alertId)
+          })
         }
       }
     } catch (error) {
@@ -265,11 +271,12 @@ export function KitchenManager() {
   const clearAllOrders = async () => {
     if (confirm("Are you sure you want to clear all orders?")) {
       try {
-        await fetch("/api/seed") // The seed endpoint clears orders first
+        await fetch("/api/orders/clear", { method: "POST" })
         announcedOrdersRef.current.clear()
         spokenAlertsRef.current.clear()
-        fetchOrders()
-        fetchAlerts()
+        setAudioQueue([])
+        fetchOrders(true)
+        fetchAlerts(true)
       } catch (error) {
         console.error("Failed to clear orders:", error)
       }
@@ -285,8 +292,8 @@ export function KitchenManager() {
       setAudioQueue([]) // Clear any pending voice lines
       
       await fetch("/api/seed")
-      await fetchOrders()
-      await fetchAlerts()
+      await fetchOrders(true) // Skip reading all the items orders all over again
+      await fetchAlerts(true)
     } catch (error) {
       console.error("Failed to seed orders:", error)
     } finally {

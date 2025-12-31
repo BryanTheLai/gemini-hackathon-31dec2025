@@ -10,8 +10,6 @@
   },
   "dependencies": {
     "@11labs/react": "^0.2.0",
-    "@datadog/browser-rum": "^6.25.1",
-    "@datadog/datadog-api-client": "^1.49.0",
     "@elevenlabs/client": "^0.12.2",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/genai": "^1.34.0",
@@ -25,7 +23,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "dd-trace": "^5.81.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
